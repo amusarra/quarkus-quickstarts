@@ -13,6 +13,7 @@ import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 
 import io.smallrye.mutiny.Multi;
+import io.quarkus.logging.Log;
 
 @Path("/quotes")
 public class QuotesResource {
@@ -27,6 +28,7 @@ public class QuotesResource {
 @GET
 @Produces(MediaType.SERVER_SENT_EVENTS) // <2>
 public Multi<Quote> stream() {
+    Log.info("streaming quotes: " + quotes);
     return quotes; // <3>
 }
 

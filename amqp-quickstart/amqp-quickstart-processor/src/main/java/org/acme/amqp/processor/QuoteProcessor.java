@@ -9,6 +9,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import io.smallrye.reactive.messaging.annotations.Blocking;
+import io.quarkus.logging.Log;
 
 /**
  * A bean consuming data from the "request" AMQP queue and giving out a random quote.
@@ -23,6 +24,7 @@ public class QuoteProcessor {
     @Outgoing("quotes")         // <2>
     @Blocking                   // <3>
     public Quote process(String quoteRequest) throws InterruptedException {
+        Log.info("Processing request: " + quoteRequest);
         // simulate some hard working task
         Thread.sleep(200);
         return new Quote(quoteRequest, random.nextInt(100));
