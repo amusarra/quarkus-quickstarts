@@ -59,3 +59,53 @@ Then, start the system using:
 > docker compose up
 ```
 Then, open your browser to `http://localhost:8080/quotes.html`, and click on the "Request Quote" button.
+
+## Test with RabbitMQ
+
+Review the application properties of the Producer and Consumer. Below are the properties for the Producer and Consumer reviewed for RabbitMQ.
+
+Application properties for the Producer (see the [application.properties](amqp-quickstart-producer/src/main/resources/application.properties) file):
+
+```properties
+# Hostname, IP address, and port of the server RabbitMQ is running on
+amqp-host=localhost
+amqp-port=5672
+
+# Username and password for the server RabbitMQ is running on
+amqp-username=quarkus
+amqp-password=quarkus
+
+# Setting outgoing channel
+mp.messaging.outgoing.quote-requests.connector=smallrye-amqp
+mp.messaging.outgoing.quote-requests.use-anonymous-sender=false
+```
+
+Application properties for the Consumer (see the [application.properties](amqp-quickstart-processor/src/main/resources/application.properties) file):
+
+```properties
+amqp-host=localhost
+amqp-port=5672
+amqp-username=quarkus
+amqp-password=quarkus
+
+# Set the AMQP address for the `requests` channel, as it's not the channel name
+mp.messaging.incoming.requests.connector=smallrye-amqp
+mp.messaging.incoming.requests.address=quote-requests
+mp.messaging.incoming.requests.durable=false
+
+# Set the AMQP address for the `quotes` channel, as it's not the channel name
+mp.messaging.outgoing.quotes.connector=smallrye-amqp
+mp.messaging.outgoing.quotes.use-anonymous-sender=false
+```
+
+Then, start the RabbitMQ broker and the applications using:
+
+```bash
+podman run --rm -p5672:5672 -p9000:15672 \
+  -e RABBITMQ_DEFAULT_USER=quarkus \
+  -e RABBITMQ_DEFAULT_PASS=quarkus \
+  -e RABBITMQ_LOG=debug \
+  rabbitmq:4.0.7-management
+```
+
+Console 1 - Start the RabbitMQ broker:
