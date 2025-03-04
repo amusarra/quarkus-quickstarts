@@ -67,6 +67,7 @@ Review the application properties of the Producer and Consumer. Below are the pr
 Application properties for the Producer (see the [application.properties](amqp-quickstart-producer/src/main/resources/application.properties) file):
 
 ```properties
+# Configure the AMQP connection properties.
 # Hostname, IP address, and port of the server RabbitMQ is running on
 amqp-host=localhost
 amqp-port=5672
@@ -75,26 +76,44 @@ amqp-port=5672
 amqp-username=quarkus
 amqp-password=quarkus
 
-# Setting outgoing channel
+# Set the AMQP address for the outgoing `quotes` channel.
+# The address is in format addressing v2, that is specific to RabbitMQ.
+# In this case, the address is an exchange.
+# For more information, see https://www.rabbitmq.com/docs/amqp#addresses
 mp.messaging.outgoing.quote-requests.connector=smallrye-amqp
+mp.messaging.outgoing.quote-requests.address=/exchanges/request-quotes
 mp.messaging.outgoing.quote-requests.use-anonymous-sender=false
+
+# Set the AMQP address for the incoming `requests` channel.
+# In this case, the address is a queue.
+mp.messaging.incoming.quotes.connector=smallrye-amqp
+mp.messaging.incoming.quotes.address=/queues/quotes
+mp.messaging.incoming.quotes.durable=false
 ```
 
 Application properties for the Consumer (see the [application.properties](amqp-quickstart-processor/src/main/resources/application.properties) file):
 
 ```properties
+# Configure the AMQP connection properties.
+# Hostname, IP address, and port of the server RabbitMQ is running on
 amqp-host=localhost
 amqp-port=5672
+
+# Username and password for the server RabbitMQ is running on
 amqp-username=quarkus
 amqp-password=quarkus
 
-# Set the AMQP address for the `requests` channel, as it's not the channel name
+# Set the AMQP address for the incoming `requests` channel.
+# The address is in format addressing v2, that is specific to RabbitMQ.
+# In this case, the address is a queue.
+# For more information, see https://www.rabbitmq.com/docs/amqp#addresses
 mp.messaging.incoming.requests.connector=smallrye-amqp
-mp.messaging.incoming.requests.address=quote-requests
+mp.messaging.incoming.requests.address=/queues/quotes
 mp.messaging.incoming.requests.durable=false
 
-# Set the AMQP address for the `quotes` channel, as it's not the channel name
+# Set the AMQP address for the outgoing `quotes` channel.
 mp.messaging.outgoing.quotes.connector=smallrye-amqp
+mp.messaging.outgoing.quotes.address=/exchanges/request-quotes
 mp.messaging.outgoing.quotes.use-anonymous-sender=false
 ```
 
