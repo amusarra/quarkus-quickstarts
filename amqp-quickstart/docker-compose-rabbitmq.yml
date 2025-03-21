@@ -1,0 +1,74 @@
+services:
+
+  rabbitmq:
+    hostname: amusarra-macbook-pro.local
+    image: rabbitmq:4.0.7-management
+    ports:
+      - "5671:5671"
+      - "9000:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: quarkus
+      RABBITMQ_DEFAULT_PASS: quarkus
+      RABBITMQ_LOG: debug
+    volumes:
+      - ./amqp-servers/rabbitmq/rabbitmq-tls/certs:/etc/rabbitmq/certs
+      - ./amqp-servers/rabbitmq/rabbitmq-tls/config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks:
+      - amqp-quickstart-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq-init:
+    image: rabbitmq:4.0.7-management
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - amqp-quickstart-network
+    command: >
+      bash -c "
+        rabbitmqadmin -H rabbitmq -u quarkus -p quarkus declare exchange name=request-quotes type=fanout &&
+        rabbitmqadmin -H rabbitmq -u quarkus -p quarkus declare queue name=quotes &&
+        rabbitmqadmin -H rabbitmq -u quarkus -p quarkus declare binding source=request-quotes destination=quotes
+      "
+
+  producer:
+    image: quarkus-quickstarts/amqp-quickstart-producer:1.0-${QUARKUS_MODE:-jvm}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-init:
+        condition: service_completed_successfully
+    build:
+      context: amqp-quickstart-producer
+      dockerfile: src/main/docker/Dockerfile.${QUARKUS_MODE:-jvm}
+    environment:
+      AMQP_HOST: amusarra-macbook-pro.local
+      AMQP_PORT: 5671
+    ports:
+      - "8080:8080"
+    networks:
+      - amqp-quickstart-network
+
+  processor:
+    image: quarkus-quickstarts/amqp-quickstart-processor:1.0-${QUARKUS_MODE:-jvm}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-init:
+        condition: service_completed_successfully
+    build:
+      context: amqp-quickstart-processor
+      dockerfile: src/main/docker/Dockerfile.${QUARKUS_MODE:-jvm}
+    environment:
+      AMQP_HOST: amusarra-macbook-pro.local
+      AMQP_PORT: 5671
+    networks:
+      - amqp-quickstart-network
+
+networks:
+  amqp-quickstart-network:
+    name: amqp-quickstart

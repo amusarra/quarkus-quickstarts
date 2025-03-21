@@ -4,8 +4,11 @@ import io.quarkus.tls.TlsConfiguration;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.SSLOptions;
 import io.vertx.core.net.TCPSSLOptions;
+import org.jboss.logging.Logger;
 
 public class TlsConfigUtils {
+
+  private static final Logger log = Logger.getLogger(TlsConfigUtils.class);
 
   public static void configure(TCPSSLOptions options, TlsConfiguration configuration) {
     options.setSsl(true);
@@ -31,8 +34,13 @@ public class TlsConfigUtils {
       }
 
       options.setEnabledSecureTransportProtocols(sslOptions.getEnabledSecureTransportProtocols());
-      if (sslOptions.isUseAlpn()) {
-        options.setUseAlpn(true);
+      // Try to set ALPN configuration, but handle UnsupportedOperationException
+      try {
+        options.setUseAlpn(sslOptions.isUseAlpn());
+      } catch (UnsupportedOperationException e) {
+        log.warn("ALPN configuration not supported by implementation: " +
+                 options.getClass().getName() +
+                 ". ALPN setting will be ignored.");
       }
     }
   }
